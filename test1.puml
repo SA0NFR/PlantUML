@@ -1,0 +1,10 @@
+@startuml
+actor EndUser as endUser
+actor     CS as CS
+participant Application as Application
+participant Signicat    as Signicat
+endUser -> CS : help needed
+CS -> Application : NIN 
+Application -> Signicat : create session
+Application <- Signicat : result
+@enduml
