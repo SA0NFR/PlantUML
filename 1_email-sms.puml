@@ -1,0 +1,43 @@
+@startuml
+actor "End-User" as endUser
+actor CS as CS
+
+participant Application as Application #A1CFA9
+participant Signicat as "Signicat Authentication API" #A1CFA9
+participant IDP as "IDP (e.g BankID via Signicat)" #A1CFA9
+endUser -> CS : help needed
+endUser -> CS : provide email/phone
+CS -> Application : email, sms
+activate Application #73FA79
+Application --> Application : create session code
+Application --> Application : compose applicationUrl
+endUser <- Application : applicationUrl&code via email/sms
+deactivate Application
+
+endUser -> Application : use applicationURL&code\nfrom email/sms
+activate Application #73FA79
+Application <-- Application : verify session code
+deactivate Application
+Application -> Signicat : POST /sessions ("flow":"redirect")'
+Application <- Signicat : 200 OK (id, authenticationUrl)
+
+
+Application --> endUser : Redirect End-User to authenticationUrl
+activate endUser #73FA79
+endUser --> IDP : 
+deactivate endUser
+
+note over endUser, IDP #FFAAAA: End user authenticated successfully
+IDP --> Signicat : End user is redirected back to Signicat
+note over Signicat #FFAAAA: Signicat process the authentication
+Signicat --> Application : End user is redirected\nto "callbackUrls->Success"\nwhich includes sessionId
+note over Application #FFAAAA : Customer now need to get the\nauthentication result from Signicat
+
+Application -> Signicat : GET /sessions/[Id]
+activate Signicat #73FA79
+Signicat --> Application : 200 OK {"SUCCESS", "subject", etc}
+deactivate Signicat
+note over endUser, IDP #FFAAAA: Now you are done - use the data how you want!
+CS <- Application : provide result of end-user authentication
+CS -> endUser : help out the authenticated end-user 
+@enduml
